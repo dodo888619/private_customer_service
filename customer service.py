@@ -16,8 +16,7 @@ app = FastAPI()
 openai.api_key = config.api_key
 # 调用chatgpt
 def chatgpt(content):
-    messages = []
-    messages.append({"role": "user", "content": '"' + content + '"'})
+    messages = [{"role": "user", "content": f'"{content}"'}]
     model = "gpt-3.5-turbo-0301"
     try:
         response = openai.ChatCompletion.create(
@@ -25,15 +24,13 @@ def chatgpt(content):
             messages=messages,
             max_tokens=800,
         )
-        res = response['choices'][0]['message']['content']
-        return res
+        return response['choices'][0]['message']['content']
     except Exception as e:
         print(repr(e))
         return "chatgpt 响应异常"
 
 def get_question_embedding(model,question):
-    embeddings = model.encode(question)
-    return embeddings
+    return model.encode(question)
 def get_ans(question_embeddings):
     # 连接服务
     connections.connect(host="localhost", port="19530")
@@ -50,8 +47,13 @@ def get_ans(question_embeddings):
         "metric_type": "L2",
         "params": {"nprobe": 10},
     }
-    result = my_milvus.search(question_embeddings, "embeddings", search_params, limit=config.topk, output_fields=["answer"])
-    return  result
+    return my_milvus.search(
+        question_embeddings,
+        "embeddings",
+        search_params,
+        limit=config.topk,
+        output_fields=["answer"],
+    )
 
 
 @app.get('/customer_service')
